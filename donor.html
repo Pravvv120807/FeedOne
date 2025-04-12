@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Donor Dashboard - FeedOne</title>
+  <script>
+    // Immediately redirect if no donor account exists
+    if (!localStorage.getItem('feedoneDonorAccount')) {
+      window.location.href = "login.html";
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      background: #f4f7f5;
+      font-family: 'Poppins', sans-serif;
+      color: #333;
+      padding: 2rem;
+    }
+    header {
+      text-align: center;
+      padding: 1rem;
+      position: relative;
+    }
+    .profile-icon {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      font-size: 2rem;
+      text-decoration: none;
+      color: #333;
+    }
+    .profile-icon:hover {
+      color: #48bb78;
+    }
+    .content {
+      max-width: 800px;
+      margin: auto;
+    }
+    nav.donor-nav {
+      display: flex;
+      justify-content: space-around;
+      margin: 1rem 0;
+      font-size: 3rem;
+    }
+    nav.donor-nav button {
+      background: #e2e8f0;  /* new background for icon buttons */
+      border: none;
+      border-radius: 50%;
+      padding: 0.5rem;
+      width: 4rem;
+      height: 4rem;
+      font-size: 2rem;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.3s;
+    }
+    nav.donor-nav button:hover {
+      background: #cbd5e0;
+      transform: scale(1.1);
+    }
+    section {
+      display: none;
+      margin: 2rem 0;
+    }
+    section.active {
+      display: block;
+    }
+    form label {
+      display: block;
+      margin-top: 1rem;
+      font-weight: bold;
+    }
+    form input, form button {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.25rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    form button {
+      background: #48bb78;
+      color: #fff;
+      border: none;
+      margin-top: 1rem;
+      cursor: pointer;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    table, th, td {
+      border: 1px solid #ccc;
+    }
+    th, td {
+      padding: 0.75rem;
+      text-align: left;
+    }
+    /* Modal styles */
+    .modal {
+      position: fixed;
+      z-index: 100;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-content {
+      background: #fff;
+      padding: 1.5rem;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 400px;
+      position: relative;
+      text-align: left;
+    }
+    .close {
+      position: absolute;
+      top: 0.5rem;
+      right: 1rem;
+      font-size: 2rem;
+      cursor: pointer;
+    }
+    #profileDisplay {
+      background: #e2e8f0;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Donor Dashboard</h1>
+    <!-- Use the profile icon to trigger modal editing -->
+    <a href="javascript:void(0)" id="openProfile" class="profile-icon" title="Edit Profile">👤</a>
+  </header>
+  <div class="content">
+    <!-- Inline Profile Display (read-only) -->
+    <section id="profileDisplaySection">
+      <h2>Your Profile</h2>
+      <div id="profileDisplay">
+        <!-- Profile details loaded here -->
+      </div>
+    </section>
+    
+    <nav class="donor-nav">
+      <button id="iconDonation" title="New Donation">📝</button>
+      <button id="iconTracking" title="Track Delivery">📍</button>
+      <button id="iconHistory" title="Donation History">📜</button>
+    </nav>
+    
+    <!-- New Donation Section with address validation -->
+    <section id="new-donation" class="active">
+      <h2>New Donation</h2>
+      <form id="donationForm" action="#" method="post">
+        <label for="donationItem">Donation Item:</label>
+        <input type="text" id="donationItem" name="donationItem" required />
+        
+        <label for="donationQuantity">Quantity:</label>
+        <input type="number" id="donationQuantity" name="donationQuantity" required />
+        
+        <label for="donationDate">Pickup Date:</label>
+        <input type="date" id="donationDate" name="donationDate" required />
+        
+        <label for="pickupAddress">Pickup Address:</label>
+        <input type="text" id="pickupAddress" name="pickupAddress" required />
+        
+        <button type="submit">Submit Donation</button>
+      </form>
+    </section>
+
+    <!-- Track Delivery Section -->
+    <section id="track-delivery">
+      <h2>Track Delivery</h2>
+      <form action="#" method="get">
+        <label for="trackingId">Enter Tracking ID:</label>
+        <input type="text" id="trackingId" name="trackingId" required />
+        <button type="submit">Track</button>
+      </form>
+      <p>Status: <em>No tracking information available.</em></p>
+    </section>
+
+    <!-- Donation History Section -->
+    <section id="donation-history">
+      <h2>Donation History</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Item</th>
+            <th>Quantity</th>
+            <th>Tracking ID</th>
+            <th>Address</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="donationHistoryBody">
+          <!-- Donation entries will be inserted here -->
+        </tbody>
+      </table>
+      <button id="clearHistoryBtn" style="background:#e53e3e; color:#fff; border:none; padding:0.5rem 1rem; margin-top:1rem; cursor:pointer;">
+        Clear History
+      </button>
+    </section>
+    
+    <p><a href="javascript:void(0)" id="signOutLink">Sign Out</a></p>
+    <script>
+    // Sign out functionality for donor
+    document.getElementById("signOutLink").addEventListener("click", function(){
+        localStorage.removeItem("feedoneDonorAccount");
+        window.location.href = "index.html";
+    });
+    </script>
+  </div>
+  
+  <!-- New Profile Modal for editing credentials -->
+  <div id="profileModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <span id="closeProfile" class="close">&times;</span>
+      <h2>Edit Your Profile</h2>
+      <form id="profileForm">
+        <label for="profileName">Name:</label>
+        <input type="text" id="profileName" name="profileName" required />
+        <label for="profilePhone">Phone:</label>
+        <input type="text" id="profilePhone" name="profilePhone" required />
+        <label for="profileAddress">Address:</label>
+        <input type="text" id="profileAddress" name="profileAddress" required />
+        <label for="profileEmail">Email:</label>
+        <input type="email" id="profileEmail" name="profileEmail" required />
+        <button type="submit">Save Profile</button>
+      </form>
+    </div>
+  </div>
+  
+  <script>
+    // Open profile modal when the profile icon is clicked
+    document.getElementById('openProfile').addEventListener('click', function(){
+      document.getElementById('profileModal').style.display = 'flex';
+      // Pre-fill form with saved data if available
+      const account = JSON.parse(localStorage.getItem('feedoneDonorAccount')) || {};
+      document.getElementById('profileName').value = account.name || "";
+      document.getElementById('profilePhone').value = account.phone || "";
+      document.getElementById('profileAddress').value = account.address || "";
+      document.getElementById('profileEmail').value = account.email || "";
+    });
+
+    // Close modal when the close icon is clicked
+    document.getElementById('closeProfile').addEventListener('click', function(){
+      document.getElementById('profileModal').style.display = 'none';
+    });
+
+    // Save profile data on modal form submission and update localStorage
+    document.getElementById('profileForm').addEventListener('submit', function(e){
+      e.preventDefault();
+      const name = document.getElementById('profileName').value.trim();
+      const phone = document.getElementById('profilePhone').value.trim();
+      const address = document.getElementById('profileAddress').value.trim();
+      const email = document.getElementById('profileEmail').value.trim();
+      if(!name || !phone || !address || !email){
+        alert("Please fill out all fields.");
+        return;
+      }
+      let account = JSON.parse(localStorage.getItem('feedoneDonorAccount')) || {};
+      account.name = name;
+      account.phone = phone;
+      account.address = address;
+      account.email = email;
+      localStorage.setItem('feedoneDonorAccount', JSON.stringify(account));
+      loadDonorProfile();
+      document.getElementById('profileModal').style.display = 'none';
+      alert("Profile saved successfully!");
+    });
+
+    // Load donor profile info from localStorage and display in the inline profile display
+    function loadDonorProfile() {
+      const account = JSON.parse(localStorage.getItem('feedoneDonorAccount'));
+      const displayDiv = document.getElementById('profileDisplay');
+      if (account && account.name && account.email) {
+        displayDiv.innerHTML = `<p>Name: ${account.name}</p>
+                                <p>Phone: ${account.phone || "Not set"}</p>
+                                <p>Address: ${account.address || "Not set"}</p>
+                                <p>Email: ${account.email}</p>`;
+      } else {
+        displayDiv.innerHTML = `<p>No profile data available.</p>`;
+      }
+    }
+    loadDonorProfile();
+
+    // Function to validate address using Google Geocoding API
+    async function validateAddress(address) {
+      const apiKey = "YOUR_GOOGLE_MAPS_API_KEY"; // Replace with your actual API key
+      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`;
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+        return data.status === "OK" && data.results.length > 0;
+      } catch (error) {
+        console.error("Address validation error:", error);
+        return false;
+      }
+    }
+
+    // Save donation data on form submission after validating the pickup address
+    document.getElementById('donationForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const donationItem = document.getElementById('donationItem').value;
+      const donationQuantity = document.getElementById('donationQuantity').value;
+      const donationDate = document.getElementById('donationDate').value;
+      const pickupAddress = document.getElementById('pickupAddress').value.trim();
+
+      // Validate the entered pickup address
+      const validAddress = await validateAddress(pickupAddress);
+      if (!validAddress) {
+        alert("Please enter a valid pickup address.");
+        return;
+      }
+      
+      const trackingId = generateTrackingId();
+      const trackingAddress = generateTrackingAddress();
+      let donations = JSON.parse(localStorage.getItem('donations')) || [];
+      donations.push({ donationItem, donationQuantity, donationDate, trackingId, trackingAddress, pickupAddress });
+      localStorage.setItem('donations', JSON.stringify(donations));
+      loadDonations();
+      this.reset();
+    });
+
+    // New function to generate a random tracking address
+    function generateTrackingAddress() {
+      const addresses = [
+        "123 Maple St, Springfield",
+        "456 Oak Rd, Shelbyville",
+        "789 Pine Ave, Capital City"
+      ];
+      return addresses[Math.floor(Math.random() * addresses.length)];
+    }
+    
+    // Generate random tracking ID function
+    function generateTrackingId() {
+      return 'FD-' + Math.random().toString(36).substr(2, 8).toUpperCase();
+    }
+    
+    // Toggle sections based on icon clicks
+    function showSection(sectionId) {
+      document.querySelectorAll('section').forEach(section => {
+        section.classList.remove('active');
+      });
+      document.getElementById(sectionId).classList.add('active');
+    }
+    document.getElementById('iconDonation').addEventListener('click', () => {
+      showSection('new-donation');
+    });
+    document.getElementById('iconTracking').addEventListener('click', () => {
+      showSection('track-delivery');
+    });
+    document.getElementById('iconHistory').addEventListener('click', () => {
+      showSection('donation-history');
+    });
+    
+    // Load donation entries from localStorage and update table, now including tracking IDs and addresses
+    function loadDonations() {
+      const historyBody = document.getElementById('donationHistoryBody');
+      historyBody.innerHTML = '';
+      let donations = JSON.parse(localStorage.getItem('donations')) || [];
+      donations.forEach(donation => {
+        const row = document.createElement('tr');
+        row.innerHTML = `<td>${donation.donationDate}</td>
+                         <td>${donation.donationItem}</td>
+                         <td>${donation.donationQuantity}</td>
+                         <td>${donation.trackingId}</td>
+                         <td>${donation.trackingAddress}</td>
+                         <td>Pending</td>`;
+        historyBody.appendChild(row);
+      });
+    }
+
+    // Save donation data on form submission, generate a random tracking ID and address
+    document.querySelector('#new-donation form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const donationItem = document.getElementById('donationItem').value;
+      const donationQuantity = document.getElementById('donationQuantity').value;
+      const donationDate = document.getElementById('donationDate').value;
+      const trackingId = generateTrackingId();
+      const trackingAddress = generateTrackingAddress();
+      let donations = JSON.parse(localStorage.getItem('donations')) || [];
+      donations.push({ donationItem, donationQuantity, donationDate, trackingId, trackingAddress });
+      localStorage.setItem('donations', JSON.stringify(donations));
+      loadDonations();
+      this.reset();
+    });
+
+    // Clear donation history on button click
+    document.getElementById('clearHistoryBtn').addEventListener('click', function() {
+      localStorage.removeItem('donations');
+      loadDonations();
+    });
+
+    // Initial load of donation history
+    loadDonations();
+  </script>
+</body>
+</html>

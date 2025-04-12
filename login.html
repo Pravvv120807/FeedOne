@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login/Register - FeedOne</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      background: #f4f7f5;
+      font-family: 'Poppins', sans-serif;
+      color: #333;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .form-container {
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+    }
+    .form-container h2 {
+      margin-bottom: 1rem;
+    }
+    .form-container form label {
+      display: block;
+      margin-top: 1rem;
+      font-weight: bold;
+      text-align: left;
+    }
+    .form-container form input {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.25rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .form-container form button {
+      background: #48bb78;
+      color: white;
+      border: none;
+      padding: 0.75rem;
+      margin-top: 1rem;
+      width: 100%;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .toggle-link {
+      margin-top: 1rem;
+      display: block;
+      text-decoration: none;
+      color: #2f855a;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .message {
+      margin-top: 1rem;
+      color: red;
+      font-weight: bold;
+    }
+    /* New style for the donor/recipient selection */
+    #userTypeField {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 1rem;
+    }
+    .user-type-option {
+      cursor: pointer;
+      padding: 1rem;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      width: 45%;
+      text-align: center;
+      transition: border-color 0.3s;
+    }
+    .user-type-option.active {
+      border-color: #48bb78;
+    }
+    .user-type-option span {
+      font-size: 2rem;
+      display: block;
+    }
+    .user-type-option p {
+      margin: 0.5rem 0 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="form-container">
+    <h2 id="formTitle">Login to FeedOne</h2>
+    <form id="authForm" action="#" method="post">
+      <div id="nameField" style="display:none;">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" />
+      </div>
+      <label for="email">Email:</label>
+      <input type="email" id="email" name="email" required />
+      
+      <label for="password">Password:</label>
+      <input type="password" id="password" name="password" required />
+      
+      <!-- New user type selection -->
+      <div id="userTypeField">
+        <div class="user-type-option active" data-type="donor">
+          <span>👨‍🍳</span>
+          <p>Donor</p>
+        </div>
+        <div class="user-type-option" data-type="recipient">
+          <span>🙋</span>
+          <p>Recipient</p>
+        </div>
+      </div>
+      
+      <button type="submit" id="submitButton">Login</button>
+    </form>
+    <a id="toggleAuth" class="toggle-link">Don't have an account? Register here</a>
+    <div id="message" class="message"></div>
+  </div>
+  <script>
+    // Toggle between login and register modes
+    const toggleLink = document.getElementById('toggleAuth');
+    const formTitle = document.getElementById('formTitle');
+    const nameField = document.getElementById('nameField');
+    const submitButton = document.getElementById('submitButton');
+    const messageDiv = document.getElementById('message');
+    
+    let isLogin = true;
+    toggleLink.addEventListener('click', () => {
+      isLogin = !isLogin;
+      messageDiv.textContent = '';
+      if (isLogin) {
+        formTitle.textContent = "Login to FeedOne";
+        nameField.style.display = "none";
+        submitButton.textContent = "Login";
+        toggleLink.textContent = "Don't have an account? Register here";
+      } else {
+        formTitle.textContent = "Register at FeedOne";
+        nameField.style.display = "block";
+        submitButton.textContent = "Register";
+        toggleLink.textContent = "Already have an account? Login here";
+      }
+    });
+    
+    // User type selection logic
+    const userTypeOptions = document.querySelectorAll('.user-type-option');
+    let selectedUserType = "donor"; // Default
+    userTypeOptions.forEach(option => {
+      option.addEventListener('click', () => {
+        userTypeOptions.forEach(opt => {
+          opt.classList.remove('active');
+        });
+        option.classList.add('active');
+        selectedUserType = option.getAttribute('data-type');
+      });
+    });
+    
+    // Handle form submission with separate databases
+    document.getElementById('authForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      messageDiv.textContent = '';
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const userType = selectedUserType;
+      const storageKey = userType === "donor" ? "feedoneDonorAccount" : "feedoneRecipientAccount";
+      
+      if (!isLogin) {
+        // Registration mode
+        const name = document.getElementById('name').value.trim();
+        if (!name) {
+          messageDiv.textContent = "Name is required for registration.";
+          return;
+        }
+        const account = { name, email, password, userType };
+        localStorage.setItem(storageKey, JSON.stringify(account));
+        messageDiv.style.color = "green";
+        messageDiv.textContent = "Registration successful! Redirecting...";
+        setTimeout(() => {
+          window.location.href = userType === "donor" ? "donor.html" : "recipient.html";
+        }, 1500);
+      } else {
+        // Login mode
+        const stored = localStorage.getItem(storageKey);
+        if (stored) {
+          const account = JSON.parse(stored);
+          if (account.email === email && account.password === password) {
+            messageDiv.style.color = "green";
+            messageDiv.textContent = "Login successful! Redirecting...";
+            setTimeout(() => {
+              window.location.href = userType === "donor" ? "donor.html" : "recipient.html";
+            }, 1500);
+          } else {
+            messageDiv.style.color = "red";
+            messageDiv.textContent = "Incorrect email or password.";
+          }
+        } else {
+          messageDiv.style.color = "red";
+          messageDiv.textContent = "No account found. Please register first.";
+        }
+      }
+    });
+  </script>
+</body>
+</html>

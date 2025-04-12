@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>FeedOne - Welcome</title>
+	<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&display=swap" rel="stylesheet" />
+	<style>
+		body {
+			/* Background image will be set from localStorage below */
+			background: none;
+			font-family: 'Poppins', sans-serif;
+			margin: 0;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			height: 100vh;
+			color: #fff;
+			position: relative;
+		}
+		body::before {
+			content: '';
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background-size: cover;
+			background-position: center;
+			z-index: -1;
+			opacity: 0.9;
+		}
+		.landing-container {
+			text-align: center;
+			z-index: 1;
+		}
+		.landing-container h1 {
+			font-size: 4rem;
+			margin-bottom: 2rem;
+			text-shadow: 2px 2px 8px rgba(0,0,0,0.7);
+		}
+		.landing-container a {
+			text-decoration: none;
+			background: #48bb78;
+			padding: 1rem 2rem;
+			border-radius: 8px;
+			font-weight: bold;
+			transition: background 0.3s, transform 0.3s;
+			box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+			color: #fff;
+		}
+		.landing-container a:hover {
+			background: #38a169;
+			transform: translateY(-3px);
+		}
+		@media (max-width: 600px) {
+			.landing-container h1 { font-size: 2.5rem; }
+		}
+	</style>
+</head>
+<body>
+	<div class="landing-container">
+		<h1>FeedOne</h1>
+		<a href="login.html">Login</a>
+	</div>
+	<script>
+		const bgKey = 'feedoneBackground';
+		let bgData = localStorage.getItem(bgKey);
+		if (!bgData) {
+			// Use a GitHub raw URL for your background image
+			bgData = "https://raw.githubusercontent.com/Pravvv120807/FeedOne/e82c786468d1974ba079f882cba22ceed8e5e7a0/WhatsApp%20Image%202025-04-11%20at%2016.06.35_acf43d67.jpg";
+			localStorage.setItem(bgKey, bgData);
+		}
+		document.body.style.background = `url(${bgData}) no-repeat center center/cover`;
+	</script>
+</body>
+</html>
